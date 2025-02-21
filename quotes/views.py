@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import QuoteRequestSerializer
 from .pricing_engine import calculate_price_details
-from .models import ServiceQuote  # Optional, if you want to store quotes
+from .models import ServiceQuote  # Optional: if saving quotes
 
 @api_view(['POST', 'GET'])
 def get_quote(request):
@@ -18,7 +18,7 @@ def get_quote(request):
             urgency=data['urgency'],
             location=data['location']
         )
-        # Optionally, save the quote to the database
+        # Optional: Save the quote to the database
         ServiceQuote.objects.create(
             service_type=data['service_type'],
             demand_factor=breakdown['demand_factor'],
@@ -26,6 +26,12 @@ def get_quote(request):
             location_adjustment=breakdown['location_factor'],
             price=breakdown['final_price_inr']
         )
+        # For debugging: print the breakdown in the server terminal
+        print("----- Quote Calculation Breakdown -----")
+        for key, value in breakdown.items():
+            print(f"{key}: {value}")
+        print("-----------------------------------------")
+        
         return Response({'breakdown': breakdown})
     return Response(serializer.errors, status=400)
 

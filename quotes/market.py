@@ -1,17 +1,24 @@
+from .osm import fetch_osm_businesses
+
 def fetch_base_price(service_type, location):
     """
-    Simulate fetching a base price from market data.
-    In a real-world scenario, you'd query an external API or database.
-    Prices are given in USD.
+    Automatically compute a base price using OSM data.
+    We query OSM for nodes matching the service and location.
+    The formula used is:
+    
+        base_price = default_price * (scaling_factor / (count + 1))
+    
+    where 'count' is the number of businesses found and scaling_factor is a chosen constant.
+    We then cap the computed price to be within 50% to 150% of a default price.
+    
+    Parameters:
+        service_type (str): Service name (e.g., "electrician").
+        location (str): Location (e.g., "Chennai").
+    
+    Returns:
+        float: The computed base price (in USD).
     """
-    market_prices = {
-        'electrician': {'Chennai': 40, 'Mumbai': 70, 'Delhi': 65},
-        'plumbing': {'Chennai': 35, 'Mumbai': 60, 'Delhi': 55},
-        'graphic_design': {'Chennai': 50, 'Mumbai': 80, 'Delhi': 75},
-        'legal_consultation': {'Chennai': 90, 'Mumbai': 130, 'Delhi': 120},
-        'carpentry': {'Chennai': 30, 'Mumbai': 55, 'Delhi': 50},
-        'house_cleaning': {'Chennai': 25, 'Mumbai': 45, 'Delhi': 40},
-    }
+    # Default base prices (in USD) for fallback purposes.
     default_prices = {
         'electrician': 60,
         'plumbing': 50,
@@ -20,9 +27,25 @@ def fetch_base_price(service_type, location):
         'carpentry': 40,
         'house_cleaning': 30,
     }
-    service_type = service_type.lower()
-    location_title = location.title()
-    if service_type in market_prices and location_title in market_prices[service_type]:
-        return market_prices[service_type][location_title]
-    else:
-        return default_prices.get(service_type, 50)
+    service_type_lower = service_type.lower()
+    default_price = default_prices.get(service_type_lower, 50)
+    
+    try:
+        businesses = fetch_osm_businesses(service=service_type_lower, location=location)
+        count = len(businesses)
+        # Define a scaling factor; the idea is that if count is high, competition drives price down.
+        scaling_factor = 50  # You can adjust this constant based on research.
+        computed_price = default_price * (scaling_factor / (count + 1))
+        
+        # Clamp the computed price to a reasonable range:
+        min_price = 0.5 * default_price
+        max_price = 1.5 * default_price
+        if computed_price < min_price:
+            computed_price = min_price
+        if computed_price > max_price:
+            computed_price = max_price
+            
+        return round(computed_price, 2)
+    except Exception as e:
+        print("Error fetching base price from OSM:", e)
+        return default_price
