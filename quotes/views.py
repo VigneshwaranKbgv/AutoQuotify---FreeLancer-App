@@ -1,12 +1,9 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
-from quotes.google_trends import fetch_service_demand
-from quotes.maps_api import get_location_adjustment
 from .serializers import QuoteRequestSerializer
-from .pricing_engine import calculate_price
-from .models import ServiceQuote  # Optional: if you want to save quotes
+from .pricing_engine import calculate_price_details
+from .models import ServiceQuote  # Optional, if you want to store quotes
 
 @api_view(['POST', 'GET'])
 def get_quote(request):
@@ -16,20 +13,20 @@ def get_quote(request):
     serializer = QuoteRequestSerializer(data=request.data)
     if serializer.is_valid():
         data = serializer.validated_data
-        price = calculate_price(
+        breakdown = calculate_price_details(
             service_type=data['service_type'],
             urgency=data['urgency'],
             location=data['location']
         )
-        # Optionally save the quote
+        # Optionally, save the quote to the database
         ServiceQuote.objects.create(
             service_type=data['service_type'],
-            demand_factor=fetch_service_demand(data['service_type']),
+            demand_factor=breakdown['demand_factor'],
             urgency=data['urgency'],
-            location_adjustment=get_location_adjustment(data['location']),
-            price=price
+            location_adjustment=breakdown['location_factor'],
+            price=breakdown['final_price_inr']
         )
-        return Response({'price': price})
+        return Response({'breakdown': breakdown})
     return Response(serializer.errors, status=400)
 
 def index(request):
