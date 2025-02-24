@@ -57,8 +57,20 @@ WSGI_APPLICATION = 'autoquotify.wsgi.application'
 
 # Using SQLite for simplicity; change to PostgreSQL if desired.
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'autoquotify_db',
+        'USER': 'postgres',
+        'PASSWORD': '1234',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
 }
+
+# Optional: Allow DATABASE_URL env variable for deployment
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES['default'] = dj_database_url.parse(DATABASE_URL)
 
 CACHES = {
     "default": {
