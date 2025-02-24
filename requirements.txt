@@ -1,4 +1,10 @@
-beautifulsoup4>=4.10.0  # For web scraping (if needed)
-geopy>=2.2.0  # For location-based services
-dj-database-url>=1.0.0  # For handling DATABASE_URL
-python-dotenv>=1.0.0  # For managing environment variables (optional)
+Django>=4.0,<5.0
+psycopg2-binary>=2.9.3
+requests>=2.26.0
+beautifulsoup4>=4.10.0
+pytrends>=4.8.0
+geopy>=2.2.0
+gunicorn>=20.1.0
+whitenoise>=6.0.0
+dj-database-url>=1.0.0
+python-dotenv>=1.0.0
